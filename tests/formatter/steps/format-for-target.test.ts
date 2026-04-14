@@ -182,4 +182,145 @@ describe('format-for-target', () => {
       expect(result).not.toContain('```')
     })
   })
+
+  // ── Auto-detect unfenced code ──
+
+  describe('auto-detect unfenced code (jira)', () => {
+    it('wraps detected diff in {code:diff}', () => {
+      const input = [
+        'Here is the change:',
+        '',
+        '--- a/src/app.ts',
+        '+++ b/src/app.ts',
+        '@@ -1,3 +1,4 @@',
+        ' import React from "react"',
+        '+import { useState } from "react"',
+        ' ',
+        ' function App() {',
+      ].join('\n')
+      const result = runPipeline(input, { target: 'jira' })
+      expect(result).toContain('{code:diff}')
+      expect(result).toContain('{code}')
+      expect(result).toContain('+import { useState }')
+    })
+
+    it('wraps detected code in {code}', () => {
+      const input = [
+        'Update your config:',
+        '',
+        'const config = {',
+        '  host: "localhost",',
+        '  port: 3000,',
+        '};',
+      ].join('\n')
+      const result = runPipeline(input, { target: 'jira' })
+      expect(result).toContain('{code}')
+      expect(result).toContain('const config = {')
+    })
+
+    it('does not wrap prose as code', () => {
+      const input = 'This is a normal paragraph explaining something important.'
+      const result = runPipeline(input, { target: 'jira' })
+      expect(result).not.toContain('{code}')
+    })
+  })
+
+  describe('auto-detect unfenced code (slack)', () => {
+    it('wraps detected diff in code fence with diff tag', () => {
+      const input = [
+        'Here is the change:',
+        '',
+        '@@ -1,3 +1,4 @@',
+        ' import React from "react"',
+        '+import { useState } from "react"',
+        ' ',
+        ' function App() {',
+      ].join('\n')
+      const result = runPipeline(input, { target: 'slack' })
+      expect(result).toContain('```diff')
+      expect(result).toContain('```')
+      expect(result).toContain('+import { useState }')
+    })
+
+    it('wraps detected code in code fence', () => {
+      const input = [
+        'Update your config:',
+        '',
+        'const config = {',
+        '  host: "localhost",',
+        '  port: 3000,',
+        '};',
+      ].join('\n')
+      const result = runPipeline(input, { target: 'slack' })
+      // Should have ``` wrapping the code
+      const fenceCount = (result.match(/```/g) || []).length
+      expect(fenceCount).toBeGreaterThanOrEqual(2)
+      expect(result).toContain('const config = {')
+    })
+
+    it('does not wrap prose as code', () => {
+      const input = 'This is a normal paragraph explaining something important.'
+      const result = runPipeline(input, { target: 'slack' })
+      expect(result).not.toContain('```')
+    })
+  })
+
+  describe('auto-detect does NOT activate for plain/email', () => {
+    it('plain: no wrapping of unfenced code', () => {
+      const input = [
+        'const config = {',
+        '  host: "localhost",',
+        '  port: 3000,',
+        '};',
+      ].join('\n')
+      const result = runPipeline(input, { target: 'plain' })
+      expect(result).not.toContain('{code}')
+      expect(result).not.toContain('```')
+    })
+
+    it('email: no wrapping of unfenced code', () => {
+      const input = [
+        'const config = {',
+        '  host: "localhost",',
+        '  port: 3000,',
+        '};',
+      ].join('\n')
+      const result = runPipeline(input, { target: 'email' })
+      expect(result).not.toContain('{code}')
+    })
+  })
+
+  describe('auto-detect with already-fenced code', () => {
+    it('does not double-wrap code that already has fences', () => {
+      const input = [
+        '```typescript',
+        'const x = 1;',
+        '```',
+      ].join('\n')
+      const result = runPipeline(input, { target: 'jira' })
+      expect(result).toBe('{code:typescript}\nconst x = 1;\n{code}')
+    })
+
+    it('wraps unfenced code but not already-fenced code', () => {
+      const input = [
+        '```typescript',
+        'const x = 1;',
+        '```',
+        '',
+        'And also this fix:',
+        '',
+        'function greet(name) {',
+        '  return `Hello ${name}`;',
+        '}',
+      ].join('\n')
+      const result = runPipeline(input, { target: 'jira' })
+      // Fenced code → {code:typescript}
+      expect(result).toContain('{code:typescript}')
+      // Unfenced code → {code}
+      const codeTagCount = (result.match(/\{code\}/g) || []).length
+      // Should have at least 3 {code} tags: closing for typescript + opening + closing for unfenced
+      expect(codeTagCount).toBeGreaterThanOrEqual(3)
+      expect(result).toContain('function greet(name) {')
+    })
+  })
 })
