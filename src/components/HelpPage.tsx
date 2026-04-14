@@ -124,7 +124,16 @@ export default function HelpPage({ onBack }: HelpPageProps) {
         </Section>
 
         {/* ── Step by step ── */}
-        <Section title="Step 1 &mdash; Strip ANSI Escape Codes">
+        <Section title="Step 1 &mdash; Normalize Line Endings">
+          <p>
+            Different operating systems use different line ending characters: Windows uses CRLF (<code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>\r\n</code>),
+            older Mac uses CR (<code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>\r</code>), and Unix/modern Mac uses LF (<code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>\n</code>).
+            This step normalizes all line endings to LF. It runs first because every subsequent step relies on splitting text by <code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>\n</code> to
+            process lines correctly.
+          </p>
+        </Section>
+
+        <Section title="Step 2 &mdash; Strip ANSI Escape Codes">
           <p>
             Terminal applications use ANSI escape sequences to add colors, bold text, cursor movement, and other visual effects.
             When you copy text from a terminal, these invisible control characters often come along and produce garbled output
@@ -138,7 +147,22 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           />
         </Section>
 
-        <Section title="Step 2 &mdash; Normalize Bullet Characters">
+        <Section title="Step 3 &mdash; Decode HTML Entities">
+          <p>
+            Text copied from web pages (ChatGPT web interface, documentation sites, forums) often contains HTML entities
+            instead of the actual characters. This step decodes named entities (<code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>&amp;amp;</code>, <code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>&amp;nbsp;</code>, <code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>&amp;mdash;</code>, etc.),
+            decimal entities (<code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>&amp;#169;</code>), and hex entities (<code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>&amp;#xA9;</code>) back
+            to their real characters.
+          </p>
+          <Rule
+            name="HTML entities"
+            description="Named, decimal, and hex HTML entities"
+            before={"Tom &amp; Jerry &mdash; &copy; 2024"}
+            after={"Tom & Jerry \u2014 \u00A9 2024"}
+          />
+        </Section>
+
+        <Section title="Step 4 &mdash; Normalize Bullet Characters">
           <p>
             AI tools often use fancy Unicode bullet characters instead of standard Markdown dashes.
             This step converts them all to the standard <code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>- </code> Markdown
@@ -153,12 +177,12 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           />
         </Section>
 
-        <Section title="Step 3 &mdash; Remove Decorative Symbols">
+        <Section title="Step 5 &mdash; Remove Decorative Symbols">
           <p>
-            CLI tools like Claude Code use special Unicode symbols for their interface: <code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>⏺</code> for
+            AI CLI tools use special Unicode symbols for their interface: Claude Code uses <code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>⏺</code> for
             message markers, <code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>⎿</code> for response indicators, <code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>❯</code> for
-            prompt markers, and <code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>✻</code> for thinking indicators. This step removes all of these, plus
-            entire Claude Code artifact lines like <em>"... +8 lines (ctrl+o to expand)"</em> and <em>"Cogitated for 4m 57s"</em>.
+            prompt markers, and <code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>✻</code> for thinking indicators. ChatGPT web adds <em>"Copy code"</em> and <em>"Copied!"</em> lines.
+            This step removes all of these, plus entire artifact lines like <em>"... +8 lines (ctrl+o to expand)"</em> and <em>"Cogitated for 4m 57s"</em>.
           </p>
           <Rule
             name="Decorative"
@@ -168,7 +192,7 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           />
         </Section>
 
-        <Section title="Step 4 &mdash; Remove Box-Drawing Characters">
+        <Section title="Step 6 &mdash; Remove Box-Drawing Characters">
           <p>
             Terminal tables and panels use Unicode box-drawing characters to create visual borders (lines like <code style={{ background: 'var(--color-surface-bright)', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>┌─┐│└┘</code>).
             This step removes them surgically: entire horizontal separator lines are filtered out, and vertical border
@@ -183,7 +207,7 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           />
         </Section>
 
-        <Section title="Step 5 &mdash; Remove Invisible Unicode">
+        <Section title="Step 7 &mdash; Remove Invisible Unicode">
           <p>
             Text copied from various sources can contain invisible Unicode characters that cause subtle formatting
             issues: zero-width spaces (U+200B), byte order marks (U+FEFF), soft hyphens (U+00AD), word joiners (U+2060),
@@ -198,7 +222,7 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           />
         </Section>
 
-        <Section title="Step 6 &mdash; Normalize Dashes">
+        <Section title="Step 8 &mdash; Normalize Dashes">
           <p>
             AI outputs frequently use typographic dash variants: em-dashes (&mdash;), en-dashes (&ndash;), figure dashes,
             and horizontal bars. These look similar to a regular hyphen but are different Unicode characters that can cause
@@ -214,14 +238,14 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           />
         </Section>
 
-        <Section title="Step 7 &mdash; Normalize Spaces">
+        <Section title="Step 9 &mdash; Normalize Spaces">
           <p>
             Non-breaking spaces (U+00A0) look identical to regular spaces but behave differently &mdash; they prevent line
             breaks and can cause alignment issues when pasted. This step converts them to standard spaces.
           </p>
         </Section>
 
-        <Section title="Step 8 &mdash; Normalize Smart Quotes">
+        <Section title="Step 10 &mdash; Normalize Smart Quotes">
           <p>
             AI tools often produce typographic "smart" quotes (curly quotes) instead of straight ASCII quotes. While they
             look nice in documents, they cause problems in code, commands, and many form fields. This step converts all
@@ -236,7 +260,7 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           />
         </Section>
 
-        <Section title="Step 9 &mdash; Unicode Normalization (NFC)">
+        <Section title="Step 11 &mdash; Unicode Normalization (NFC)">
           <p>
             Unicode allows the same visual character to be represented in multiple ways. For example, "e" can be a single
             character or "e" + combining accent. NFC normalization ensures consistent representation, which prevents
@@ -244,7 +268,7 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           </p>
         </Section>
 
-        <Section title="Step 10 &mdash; Whitespace Cleanup">
+        <Section title="Step 12 &mdash; Whitespace Cleanup">
           <p>
             Cleans up whitespace issues: collapses multiple consecutive spaces into one (while preserving leading
             indentation), removes trailing whitespace from each line, and converts lines that contain only spaces into
@@ -259,7 +283,7 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           />
         </Section>
 
-        <Section title="Step 11 &mdash; Dedent">
+        <Section title="Step 13 &mdash; Dedent">
           <p>
             Terminal output is often uniformly indented (e.g., every line starts with 4+ spaces because of the terminal
             UI frame). This step detects the minimum common indentation across all non-empty lines and strips it, while
@@ -274,7 +298,7 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           />
         </Section>
 
-        <Section title="Step 12 &mdash; Re-join Wrapped Lines">
+        <Section title="Step 14 &mdash; Re-join Wrapped Lines">
           <p>
             When you copy text from a terminal with a fixed width (e.g., 80 or 120 columns), long sentences get split
             into multiple lines. This step detects and re-joins these artificial line breaks using heuristics:
@@ -295,10 +319,10 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           </div>
         </Section>
 
-        <Section title="Step 13 &mdash; Final Cleanup">
+        <Section title="Step 15 &mdash; Final Cleanup">
           <p>
-            Normalizes line endings (CRLF and CR to LF), collapses three or more consecutive blank lines
-            into a maximum of two, and trims leading/trailing whitespace from the entire document.
+            Collapses three or more consecutive blank lines into a maximum of two, and trims leading/trailing
+            whitespace from the entire document. This ensures the output is compact and ready to paste.
           </p>
         </Section>
 
