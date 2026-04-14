@@ -76,4 +76,115 @@ describe('detect-code-blocks', () => {
       expect(result[1]).toEqual({ startLine: 8, endLine: 13 })
     })
   })
+
+  describe('detectUnfencedCode', () => {
+    it('detects a block of JavaScript code', () => {
+      const lines = [
+        'Here is the fix:',
+        '',
+        'function greet(name) {',
+        '  const message = `Hello ${name}`;',
+        '  return message;',
+        '}',
+        '',
+        'This should work now.',
+      ]
+      const result = detectUnfencedCode(lines)
+      expect(result).toEqual([{ startLine: 2, endLine: 5 }])
+    })
+
+    it('detects a block with import/export statements', () => {
+      const lines = [
+        'import React from "react"',
+        'import { useState } from "react"',
+        '',
+        'export const App = () => {',
+        '  const [count, setCount] = useState(0)',
+        '  return <div>{count}</div>',
+        '}',
+      ]
+      const result = detectUnfencedCode(lines)
+      expect(result).toEqual([{ startLine: 0, endLine: 6 }])
+    })
+
+    it('detects Python code', () => {
+      const lines = [
+        'def calculate(x, y):',
+        '    result = x + y',
+        '    return result',
+      ]
+      const result = detectUnfencedCode(lines)
+      expect(result).toEqual([{ startLine: 0, endLine: 2 }])
+    })
+
+    it('does not detect regular prose', () => {
+      const lines = [
+        'This is a normal paragraph of text that describes something.',
+        'It has multiple sentences and continues on the next line.',
+        'The explanation covers several important points about the topic.',
+      ]
+      const result = detectUnfencedCode(lines)
+      expect(result).toEqual([])
+    })
+
+    it('does not detect a single line of code', () => {
+      const lines = [
+        'const x = 1;',
+      ]
+      const result = detectUnfencedCode(lines)
+      expect(result).toEqual([])
+    })
+
+    it('detects code block surrounded by prose', () => {
+      const lines = [
+        'You need to update the config:',
+        '',
+        'const config = {',
+        '  host: "localhost",',
+        '  port: 3000,',
+        '};',
+        '',
+        'Then restart the server.',
+      ]
+      const result = detectUnfencedCode(lines)
+      expect(result).toEqual([{ startLine: 2, endLine: 5 }])
+    })
+
+    it('detects terminal command output', () => {
+      const lines = [
+        '$ npm install react',
+        'added 5 packages in 2s',
+        '$ npm run build',
+        'Build successful',
+      ]
+      const result = detectUnfencedCode(lines)
+      expect(result).toEqual([{ startLine: 0, endLine: 3 }])
+    })
+
+    it('handles blank lines within a code block', () => {
+      const lines = [
+        'function a() {',
+        '  return 1',
+        '}',
+        '',
+        'function b() {',
+        '  return 2',
+        '}',
+      ]
+      const result = detectUnfencedCode(lines)
+      expect(result).toEqual([{ startLine: 0, endLine: 6 }])
+    })
+
+    it('skips lines already detected as diffs', () => {
+      const lines = [
+        '@@ -1,3 +1,3 @@',
+        ' const x = 1',
+        '-const y = 2',
+        '+const y = 3',
+      ]
+      // When called with skipRanges covering the diff
+      const result = detectUnfencedCode(lines, [{ startLine: 0, endLine: 3 }])
+      expect(result).toEqual([])
+    })
+  })
 })
