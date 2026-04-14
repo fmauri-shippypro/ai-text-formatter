@@ -323,6 +323,9 @@ describe('format-for-target', () => {
       expect(result).toContain('function greet(name) {')
     })
 
+  })
+
+  describe('content protection inside auto-detected blocks', () => {
     it('does not transform bold inside auto-detected code block (jira)', () => {
       const input = [
         'const x = **bold**;',

@@ -236,6 +236,7 @@ describe('detect-code-blocks', () => {
       const code = detectUnfencedCode(lines, diffs)
       expect(code).toHaveLength(1)
       expect(code[0].startLine).toBe(7)
+      expect(code[0].endLine).toBe(9)
     })
 
     it('placeholder lines from fenced code are not detected as code', () => {
@@ -274,8 +275,8 @@ describe('detect-code-blocks', () => {
     })
 
     it('scores plain prose low or negative', () => {
-      expect(computeLineScore('This is a normal sentence.')).toBeLessThan(2)
-      expect(computeLineScore('The explanation covers important points.')).toBeLessThan(2)
+      expect(computeLineScore('This is a normal sentence.')).toBeLessThanOrEqual(0)
+      expect(computeLineScore('The explanation covers important points.')).toBeLessThanOrEqual(0)
     })
 
     it('scores blank lines as 0', () => {
