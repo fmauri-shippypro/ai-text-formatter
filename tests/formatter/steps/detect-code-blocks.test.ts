@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { detectUnfencedDiffs, detectUnfencedCode } from '../../../src/formatter/steps/detect-code-blocks'
+import { detectUnfencedDiffs, detectUnfencedCode, computeLineScore } from '../../../src/formatter/steps/detect-code-blocks'
 
 describe('detect-code-blocks', () => {
   describe('detectUnfencedDiffs', () => {
@@ -185,6 +185,114 @@ describe('detect-code-blocks', () => {
       // When called with skipRanges covering the diff
       const result = detectUnfencedCode(lines, [{ startLine: 0, endLine: 3 }])
       expect(result).toEqual([])
+    })
+  })
+
+  describe('edge cases', () => {
+    it('handles empty input', () => {
+      expect(detectUnfencedDiffs([])).toEqual([])
+      expect(detectUnfencedCode([])).toEqual([])
+    })
+
+    it('handles input that is all blank lines', () => {
+      const lines = ['', '', '']
+      expect(detectUnfencedDiffs(lines)).toEqual([])
+      expect(detectUnfencedCode(lines)).toEqual([])
+    })
+
+    it('does not detect markdown bullet lists as code', () => {
+      const lines = [
+        '- Install dependencies',
+        '- Run the build',
+        '- Deploy to production',
+      ]
+      expect(detectUnfencedCode(lines)).toEqual([])
+    })
+
+    it('does not detect numbered lists as code', () => {
+      const lines = [
+        '1. First step',
+        '2. Second step',
+        '3. Third step',
+      ]
+      expect(detectUnfencedCode(lines)).toEqual([])
+    })
+
+    it('detects code after diff in mixed input', () => {
+      const lines = [
+        '@@ -1,2 +1,2 @@',
+        '-const old = 1',
+        '+const new = 2',
+        ' const keep = 3',
+        '',
+        'And also update:',
+        '',
+        'function helper() {',
+        '  return true;',
+        '}',
+      ]
+      const diffs = detectUnfencedDiffs(lines)
+      expect(diffs).toHaveLength(1)
+      const code = detectUnfencedCode(lines, diffs)
+      expect(code).toHaveLength(1)
+      expect(code[0].startLine).toBe(7)
+    })
+
+    it('placeholder lines from fenced code are not detected as code', () => {
+      const lines = [
+        'Some text',
+        '\x00CODE0\x00',
+        'More text',
+      ]
+      expect(detectUnfencedCode(lines)).toEqual([])
+    })
+
+    it('does not detect markdown blockquotes as code', () => {
+      const lines = [
+        '> This is a quoted paragraph',
+        '> that continues on the next line',
+        '> with more quoted text here',
+      ]
+      expect(detectUnfencedCode(lines)).toEqual([])
+    })
+
+    it('does not detect prose with parentheticals as code', () => {
+      const lines = [
+        'The result should be positive (greater than zero)',
+        'This is confirmed by the test (see above)',
+        'Check the documentation for details (appendix B)',
+      ]
+      expect(detectUnfencedCode(lines)).toEqual([])
+    })
+  })
+
+  describe('computeLineScore', () => {
+    it('scores language keywords highly', () => {
+      expect(computeLineScore('function greet() {')).toBeGreaterThanOrEqual(4)
+      expect(computeLineScore('import React from "react"')).toBeGreaterThanOrEqual(2)
+      expect(computeLineScore('const x = 1;')).toBeGreaterThanOrEqual(4)
+    })
+
+    it('scores plain prose low or negative', () => {
+      expect(computeLineScore('This is a normal sentence.')).toBeLessThan(2)
+      expect(computeLineScore('The explanation covers important points.')).toBeLessThan(2)
+    })
+
+    it('scores blank lines as 0', () => {
+      expect(computeLineScore('')).toBe(0)
+      expect(computeLineScore('   ')).toBe(0)
+    })
+
+    it('scores indented code lines with bonus', () => {
+      expect(computeLineScore('  return result;')).toBeGreaterThan(computeLineScore('return result;'))
+    })
+
+    it('scores terminal commands highly', () => {
+      expect(computeLineScore('$ npm install')).toBeGreaterThanOrEqual(2)
+    })
+
+    it('does not score markdown blockquotes as code', () => {
+      expect(computeLineScore('> This is a quote')).toBeLessThan(2)
     })
   })
 })

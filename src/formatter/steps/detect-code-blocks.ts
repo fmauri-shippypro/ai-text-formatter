@@ -79,7 +79,7 @@ const CAMEL_OR_SNAKE_RE = /[a-z][A-Z]|[a-z]_[a-z]/
 // Syntactic punctuation chars for density calculation
 const SYNTAX_CHARS = new Set(['{', '}', ';', '(', ')', '[', ']', '<', '>', '=', '/', '#'])
 
-function computeLineScore(line: string): number {
+export function computeLineScore(line: string): number {
   const trimmed = line.trim()
   if (trimmed === '') return 0 // blank lines are neutral
 

@@ -322,5 +322,25 @@ describe('format-for-target', () => {
       expect(codeTagCount).toBeGreaterThanOrEqual(3)
       expect(result).toContain('function greet(name) {')
     })
+
+    it('does not transform bold inside auto-detected code block (jira)', () => {
+      const input = [
+        'const x = **bold**;',
+        'const y = 2;',
+        'const z = 3;',
+      ].join('\n')
+      const result = runPipeline(input, { target: 'jira' })
+      expect(result).toContain('**bold**')
+    })
+
+    it('does not transform bold inside auto-detected code block (slack)', () => {
+      const input = [
+        'const x = **bold**;',
+        'const y = 2;',
+        'const z = 3;',
+      ].join('\n')
+      const result = runPipeline(input, { target: 'slack' })
+      expect(result).toContain('**bold**')
+    })
   })
 })
