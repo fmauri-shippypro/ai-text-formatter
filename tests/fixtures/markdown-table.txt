@@ -1,0 +1,9 @@
+Here is a summary table:
+
+| Feature | Status | Notes |
+| ------- | ------ | ----- |
+| Auth    | Done   | OAuth2 |
+| API     | WIP    | REST   |
+| UI      | TODO   | React  |
+
+And some text after the table.

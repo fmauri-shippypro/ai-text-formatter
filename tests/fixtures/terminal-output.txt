@@ -1,0 +1,12 @@
+[1;32m✓[0m [2mAll tests passed[0m
+[31m✗[0m [1mFailed: connection timeout[0m
+
+┌──────────────────┬──────────┬─────────┐
+│ Name             │ Status   │ Count   │
+├──────────────────┼──────────┼─────────┤
+│ Test A           │ Passed   │ 42      │
+│ Test B           │ Failed   │ 7       │
+└──────────────────┴──────────┴─────────┘
+
+Some text after the table with em—dash and en–dash.
+Also has non‑breaking and figure‒dash characters.
