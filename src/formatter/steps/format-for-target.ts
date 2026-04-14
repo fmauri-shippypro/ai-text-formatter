@@ -79,11 +79,12 @@ function toJira(text: string): string {
   // Auto-detect unfenced code/diffs and wrap them
   result = wrapDetectedBlocks(result, 'jira')
 
-  // Protect newly created {code} blocks too
+  // Protect {code} blocks created by wrapDetectedBlocks before
+  // heading/bold/table transforms run. Pre-existing blocks are already
+  // placeholders (\x00JCODE...\x00) so only new ones match this regex.
   result = result.replace(
     /\{code(?::\w+)?\}[\s\S]*?\{code\}/g,
     (match) => {
-      if (match.startsWith('\x00')) return match
       codeBlocks.push(match)
       return `\x00JCODE${codeBlocks.length - 1}\x00`
     },
