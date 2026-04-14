@@ -8,7 +8,7 @@ const DIFF_FILE_HEADER_RE = /^(?:---|\+\+\+)\s+\S/
 // @@ -N,N +N,N @@
 const DIFF_HUNK_HEADER_RE = /^@@\s+-\d+(?:,\d+)?\s+\+\d+(?:,\d+)?\s+@@/
 // +line or -line (but NOT "- text" with space = bullet list)
-const DIFF_ADDED_RE = /^\+[^\+\s]|^\+$/
+const DIFF_ADDED_RE = /^\+[^+\s]|^\+$/
 const DIFF_REMOVED_RE = /^-[^-\s]|^-$/
 // Context line in a diff: starts with a space (not blank)
 const DIFF_CONTEXT_RE = /^ \S/
@@ -41,7 +41,7 @@ export function detectUnfencedDiffs(lines: string[]): DetectedBlock[] {
     let diffLineCount = 0
 
     while (i < lines.length) {
-      if (isDiffLine(lines[i]) || DIFF_FILE_HEADER_RE.test(lines[i])) {
+      if (isDiffLine(lines[i])) {
         diffLineCount++
         i++
       } else if (lines[i].trim() === '' && i + 1 < lines.length && isDiffLine(lines[i + 1])) {

@@ -35,8 +35,8 @@ describe('detect-code-blocks', () => {
 
     it('ignores blocks with fewer than 3 diff lines', () => {
       const lines = [
-        '-removed',
-        '+added',
+        '--- a/file.ts',
+        '+++ b/file.ts',
       ]
       const result = detectUnfencedDiffs(lines)
       expect(result).toEqual([])
