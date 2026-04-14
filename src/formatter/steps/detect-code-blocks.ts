@@ -68,11 +68,12 @@ export function detectUnfencedDiffs(lines: string[]): DetectedBlock[] {
 
 const LANG_KEYWORDS_RE = /^(?:function|const|let|var|import|export|class|interface|type|def|return|from|async|await|if|for|while|switch|case)\b/
 // Trailing syntax chars that end code lines (including comma for object/array props)
-const LINE_ENDING_SYNTAX_RE = /[{};),]\s*$/
+const LINE_ENDING_SYNTAX_RE = /[{};,]\s*$/
 const OPERATORS_RE = /===|!==|=>|->|::|&&|\|\||<<|>>/
 const COMMENT_MARKERS_RE = /^\s*(?:\/\/|\/\*|\*\/|#\s|"""|''')/
-// Terminal prompt: $ or > followed by a non-space char — weight 2 (strong signal)
-const TERMINAL_CMD_RE = /^\s*[$>]\s+\S/
+// Terminal prompt: $ followed by a non-space char — weight 2 (strong signal)
+// Restricted to $ only; > is also used for Markdown blockquotes and email-quoted text
+const TERMINAL_CMD_RE = /^\s*\$\s+\S/
 const CAMEL_OR_SNAKE_RE = /[a-z][A-Z]|[a-z]_[a-z]/
 
 // Syntactic punctuation chars for density calculation
@@ -154,6 +155,9 @@ export function detectUnfencedCode(
       // If we have a trailing prose streak (no preceding blank), include those lines
       const physicalEnd = i - 1
       if (blockStart !== -1 && proseStreak > 0 && pendingBlanks === 0) {
+        // Trailing prose directly attached to code (no blank separator) is included in
+        // the block. This handles terminal output where non-code lines like "Build successful"
+        // follow commands. A blank line before prose acts as a separator instead.
         // Trailing prose directly attached to code: include up to last non-blank physical line
         let end = physicalEnd
         while (end > blockStart && lines[end].trim() === '') end--
